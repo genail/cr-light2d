@@ -1,0 +1,70 @@
+<!-- Coral Reef 2D Lighting Library -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    
+    <parent>
+        <groupId>pl.graniec</groupId>
+        <artifactId>cr</artifactId>
+        <version>1</version>
+    </parent>
+    
+    <modelVersion>4.0.0</modelVersion>
+    
+    <groupId>pl.graniec</groupId>
+    <artifactId>cr-light2d</artifactId>
+    <packaging>jar</packaging>
+    <version>0.1-SNAPSHOT</version>
+    
+    <name>Coral Reef 2D Lighting Library</name>
+    <url>http://graniec.pl/</url>
+    
+    <scm>
+        <connection>scm:svn:svn://atom/general/CoralReef/trunk/cr-light2d</connection>
+        <developerConnection>scm:svn:svn://atom/general/CoralReef/trunk/cr-light2d</developerConnection>
+        <url>svn://atom/general/CoralReef/trunk/cr-light2d</url>
+    </scm>
+
+    <dependencies>
+    
+        <!-- Geometry Library -->
+        <dependency>
+            <groupId>pl.graniec</groupId>
+            <artifactId>cr-geometry</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+    
+        <!-- JUnit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.5</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <!-- JMock -->
+        <dependency>
+            <groupId>org.jmock</groupId>
+            <artifactId>jmock-junit4</artifactId>
+            <version>2.5.1</version>
+            <scope>test</scope>
+        </dependency>
+        
+    </dependencies>
+    
+    <build>
+        <plugins>
+        
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.5</source>
+                    <target>1.5</target>
+                </configuration>
+            </plugin> 
+                
+        </plugins>
+    </build>
+    
+</project>
+
