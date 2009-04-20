@@ -45,6 +45,12 @@ import pl.graniec.coralreef.geometry.Vector2;
  */
 public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 
+	enum Direction {
+		None,
+		Left,
+		Right
+	}
+	
 	private static final class ResistorBind {
 		final LightResistor resistor;
 		final int pointIndex;
@@ -55,6 +61,70 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			this.pointIndex = pointIndex;
 		}
 		
+	}
+	
+	static final float getAngleDifference(final float from, final float to) {
+		final float transCurrent = to - from;
+		
+		if (transCurrent > 180.0f) {
+			return -180.0f + (transCurrent - 180.0f);
+		} else if (transCurrent < -180.0f) {
+			return 180.0f + (transCurrent + 180.0f);
+		}
+		
+		return transCurrent;
+	}
+
+	static final Direction getDirection(final float lastAngle, final float currentAngle) {
+		return (getAngleDifference(lastAngle, currentAngle) > 0) ? Direction.Left : Direction.Right;
+	}
+	
+	private SortedMap<Float, ResistorBind> buildViewport(final LightSource source, final List<LightResistor> nearResistors) {
+		final SortedMap<Float, ResistorBind> viewport = new TreeMap<Float, ResistorBind>();
+		
+		float x, y;
+		float angle = 0, lastAngle;
+		
+		float leftMostAngle, rightMostAngle;
+		int leftMostIndex, rightMostIndex;
+		boolean firstPoint;
+		int index;
+		
+		// keeps the angle => verticle index map to find boundary verticles
+//		final SortedMap<Float, Integer> angleIndexMap = new TreeMap<Float, Integer>();
+		
+		for (final LightResistor r : nearResistors) {
+			
+			firstPoint = true;
+			index = -1;
+			
+			for (final Point2 p : r.getVerticles()) {
+				
+				++index;
+				
+				// let's move light source to the origin of 2-dimensional world.
+				x = p.x - source.x;
+				y = p.y - source.y;
+				
+				// get the angle
+				lastAngle = angle;
+				angle = Vector2.angle(x, y);
+				
+				if (firstPoint) {
+					// let's say for now that this is left-most and right-most point
+					leftMostIndex = rightMostIndex = index;
+					leftMostAngle = rightMostAngle = angle;
+					
+					firstPoint = false;
+					
+					continue;
+				}
+				
+				
+			}
+		}
+		
+		return viewport;
 	}
 	
 	/*
@@ -91,59 +161,6 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		return null;
 	}
 
-	private SortedMap<Float, ResistorBind> buildViewport(final LightSource source, final List<LightResistor> nearResistors) {
-		final SortedMap<Float, ResistorBind> viewport = new TreeMap<Float, ResistorBind>();
-		
-		float x, y;
-		float angle;
-		
-		float leftMostAngle, rightMostAngle;
-		int leftMostIndex, rightMostIndex;
-		boolean firstPoint;
-		int index;
-		
-		// keeps the angle => verticle index map to find boundary verticles
-//		final SortedMap<Float, Integer> angleIndexMap = new TreeMap<Float, Integer>();
-		
-		for (final LightResistor r : nearResistors) {
-			
-			firstPoint = true;
-			index = -1;
-			
-			for (final Point2 p : r.getVerticles()) {
-				
-				++index;
-				
-				// let's move light source to the origin of 2-dimensional world.
-				x = p.x - source.x;
-				y = p.y - source.y;
-				
-				// get the angle
-				angle = Vector2.angle(x, y);
-				
-				if (firstPoint) {
-					// let's say for now that this is left-most and right-most point
-					leftMostIndex = rightMostIndex = index;
-					leftMostAngle = rightMostAngle = angle;
-					
-					firstPoint = false;
-					
-					continue;
-				}
-				
-				// TODO: tutaj skończyłem
-				// Mój pomysł jest taki, by śledzić w którym kierunku prowadzą kolejne
-				// wierzchołki i w momencie zwrotnym zapamiętać wierzchołek jako
-				// graniczny po odpowiedniej stronie. Tak mógłbym zapisać poprawnie
-				// strony spirali i fakt jak wiele obrotów zrobiła. Najważniejszy
-				// jest tylko pierwszy pełny obrót i najbardziej kłopotliwy
-				
-			}
-		}
-		
-		return viewport;
-	}
-
 	/**
 	 * Creates a list of resistors that can create shadow (they're in
 	 * light distance).
@@ -153,6 +170,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		final List<LightResistor> result = new LinkedList<LightResistor>();
 		
 		Box2 bbox;
+		
 		float diagonal;
 		float distance, distanceMin;
 		Point2 otherVerticles[] = new Point2[3];
