@@ -1,5 +1,6 @@
 package pl.graniec.coralreef.light2d;
 import java.util.Collection;
+import java.util.Iterator;
 
 import javax.swing.Box;
 
@@ -48,7 +49,6 @@ public class LightResistor extends Geometry {
 	/*
 	 * @see pl.graniec.coralreef.geometry.Geometry#addVerticle(pl.graniec.coralreef.geometry.Point2)
 	 */
-	@Override
 	public void addVerticle(Point2 point) {
 		super.addVerticle(point);
 		bbox = null;
@@ -57,8 +57,7 @@ public class LightResistor extends Geometry {
 	/*
 	 * @see pl.graniec.coralreef.geometry.Geometry#addVerticles(java.util.Collection)
 	 */
-	@Override
-	public void addVerticles(Collection<Point2> verticles) {
+	public void addVerticles(Collection verticles) {
 		super.addVerticles(verticles);
 		bbox = null;
 	}
@@ -66,8 +65,7 @@ public class LightResistor extends Geometry {
 	/*
 	 * @see pl.graniec.coralreef.geometry.Geometry#addVerticles(pl.graniec.coralreef.geometry.Point2[])
 	 */
-	@Override
-	public void addVerticles(Point2... points) {
+	public void addVerticles(Point2[] points) {
 		super.addVerticles(points);
 		bbox = null;
 	}
@@ -79,10 +77,12 @@ public class LightResistor extends Geometry {
 		}
 		
 		// get first point and set it's values
-		final Point2 firstPoint = verticles.get(0);
+		final Point2 firstPoint = (Point2) verticles.get(0);
 		bbox = new Box2(firstPoint.x, firstPoint.y, firstPoint.x, firstPoint.y);
 		
-		for (Point2 p : verticles) {
+		for (final Iterator itor = verticles.iterator(); itor.hasNext();) {
+			final Point2 p = (Point2) itor.next();
+			
 			if (p == firstPoint) {
 				continue;
 			}

@@ -28,32 +28,24 @@
  */
 package pl.graniec.coralreef.light2d;
 
-import static org.junit.Assert.*;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
+import junit.framework.TestCase;
 import pl.graniec.coralreef.light2d.SimpleLightAlgorithm.Direction;
 
 /**
  * @author Piotr Korzuszek <piotr.korzuszek@gmail.com>
  *
  */
-public class SimpleLightAlgorithmTest {
+public class SimpleLightAlgorithmTest extends TestCase {
 
-	@Before
 	public void setUp() throws Exception {
 	}
 
-	@After
 	public void tearDown() throws Exception {
 	}
 
 	/**
 	 * Test method for {@link pl.graniec.coralreef.light2d.SimpleLightAlgorithm#getDirection(float, float)}.
 	 */
-	@Test
 	public void testGetDirection() {
 		assertEquals(Direction.Left, SimpleLightAlgorithm.getDirection(0, 45));
 		assertEquals(Direction.Right, SimpleLightAlgorithm.getDirection(45, 0));
@@ -65,7 +57,6 @@ public class SimpleLightAlgorithmTest {
 		assertEquals(Direction.Right, SimpleLightAlgorithm.getDirection(-170, 170));
 	}
 	
-	@Test
 	public void testGetAngleDifference() {
 		assertEquals(45f, SimpleLightAlgorithm.getAngleDifference(0, 45), 0.0001f);
 		assertEquals(-45f, SimpleLightAlgorithm.getAngleDifference(45, 0), 0.0001f);

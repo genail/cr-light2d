@@ -39,7 +39,7 @@ import pl.graniec.coralreef.geometry.Geometry;
  */
 public abstract class AbstractLightingAlgorithm {
 	/** All light resistors */
-	protected final Set<LightResistor> resistors = new HashSet<LightResistor>();
+	protected final Set resistors = new HashSet();
 	
 	public void addLightResistor(LightResistor resistor) {
 		resistors.add(resistor);

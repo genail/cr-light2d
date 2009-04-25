@@ -28,6 +28,7 @@
  */
 package pl.graniec.coralreef.light2d;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedMap;
@@ -45,10 +46,13 @@ import pl.graniec.coralreef.geometry.Vector2;
  */
 public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 
-	enum Direction {
-		None,
-		Left,
-		Right
+	public static final class Direction {
+		public static final int None = 1;
+		public static final int Left = 2;
+		public static final int Right = 3;
+		
+		private Direction() {
+		}
 	}
 	
 	private static final class ResistorBind {
@@ -75,12 +79,12 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		return transCurrent;
 	}
 
-	static final Direction getDirection(final float lastAngle, final float currentAngle) {
+	static final int getDirection(final float lastAngle, final float currentAngle) {
 		return (getAngleDifference(lastAngle, currentAngle) > 0) ? Direction.Left : Direction.Right;
 	}
 	
-	private SortedMap<Float, ResistorBind> buildViewport(final LightSource source, final List<LightResistor> nearResistors) {
-		final SortedMap<Float, ResistorBind> viewport = new TreeMap<Float, ResistorBind>();
+	private SortedMap/*<Float, ResistorBind>*/ buildViewport(final LightSource source, final List nearResistors) {
+		final SortedMap viewport = new TreeMap();
 		
 		float x, y;
 		float angle = 0, lastAngle;
@@ -93,12 +97,16 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		// keeps the angle => verticle index map to find boundary verticles
 //		final SortedMap<Float, Integer> angleIndexMap = new TreeMap<Float, Integer>();
 		
-		for (final LightResistor r : nearResistors) {
+		for (final Iterator itor = nearResistors.iterator(); itor.hasNext();) {
+			final LightResistor r = (LightResistor) itor.next();
 			
 			firstPoint = true;
 			index = -1;
 			
-			for (final Point2 p : r.getVerticles()) {
+			final Point2[] verticles = r.getVerticles();
+			
+			for (int i = 0; i < verticles.length; ++i) {
+				final Point2 p = verticles[i];
 				
 				++index;
 				
@@ -130,11 +138,10 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 	/*
 	 * @see pl.graniec.coralreef.light2d.AbstractLightingAlgorithm#createRays(pl.graniec.coralreef.light2d.LightSource)
 	 */
-	@Override
 	public Geometry createRays(final LightSource source) {
 		
 		// build resistors list that can make the shadow (its near light source)
-		final List<LightResistor> nearResistors = determineNearResistors(source);
+		final List nearResistors = determineNearResistors(source);
 		
 		// Create one dimensional axis with left and right side point of a
 		// resistor like this:
@@ -156,7 +163,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		// The resistors bounding points exists in resistor geomery as one
 		// of its verticles.
 		
-		final SortedMap<Float, ResistorBind> viewport = buildViewport(source, nearResistors);
+		final SortedMap viewport = buildViewport(source, nearResistors);
 		
 		return null;
 	}
@@ -165,9 +172,9 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 	 * Creates a list of resistors that can create shadow (they're in
 	 * light distance).
 	 */
-	private List<LightResistor> determineNearResistors(final LightSource source) {
+	private List/*<LightResistor>*/ determineNearResistors(final LightSource source) {
 		
-		final List<LightResistor> result = new LinkedList<LightResistor>();
+		final List result = new LinkedList();
 		
 		Box2 bbox;
 		
@@ -176,7 +183,8 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		Point2 otherVerticles[] = new Point2[3];
 		boolean foundOther;
 		
-		for (LightResistor r : resistors) {
+		for (final Iterator itor = resistors.iterator(); itor.hasNext();) {
+			final LightResistor r = (LightResistor) itor.next();
 			bbox = r.getBoundingBox();
 			diagonal = bbox.diagonal();
 		
@@ -203,7 +211,8 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			
 			foundOther = false;
 			
-			for (Point2 p : otherVerticles) {
+			for (int i = 0; i < otherVerticles.length; ++i) {
+				final Point2 p = otherVerticles[i];
 				distance = Segment.length(p.x, p.y, source.x, source.y);
 				
 				if (distance <= source.intensity) {
