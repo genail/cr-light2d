@@ -67,6 +67,88 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		
 	}
 	
+	private static final class ResistorSegment extends Segment {
+		
+		final LightResistor resistor;
+
+		public ResistorSegment(final LightResistor resistor, float x1, float y1, float x2, float y2) {
+			super(x1, y1, x2, y2);
+			this.resistor = resistor;
+		}
+		
+	}
+	
+	/**
+	 * Segment point that can tell the angle on which it residents.
+	 *
+	 */
+	static final class ViewportPoint extends Point2 implements Comparable {
+
+		final ResistorSegment segment;
+		final float angle;
+
+		public ViewportPoint(final LightSource source, final ResistorSegment segment, float x, float y) {
+			super(x - source.x, y - source.y);
+			this.segment = segment;
+			
+			this.angle = Vector2.angle(this.x, this.y);
+		}
+
+		public int compareTo(Object obj) {
+			if (getClass() != obj.getClass()) {
+				throw new ClassCastException("cannnot cast " + obj.getClass() + " to " + getClass());
+			}
+			
+			final ViewportPoint other = (ViewportPoint) obj;
+			
+			if (angle < other.angle) {
+				return -1;
+			} else if (angle > other.angle) {
+				return +1;
+			} else {
+				return 0;
+			}
+		}
+		
+		/*
+		 * @see java.lang.Object#toString()
+		 */
+		public String toString() {
+			return getClass().getSimpleName() + "[x=" + x + ",y=" + y + ",angle=" + angle + "]";
+		}
+
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (!super.equals(obj))
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			ViewportPoint other = (ViewportPoint) obj;
+			if (Float.floatToIntBits(angle) != Float
+					.floatToIntBits(other.angle))
+				return false;
+			if (segment == null) {
+				if (other.segment != null)
+					return false;
+			} else if (!segment.equals(other.segment))
+				return false;
+			return true;
+		}
+
+		public int hashCode() {
+			final int prime = 31;
+			int result = super.hashCode();
+			result = prime * result + Float.floatToIntBits(angle);
+			result = prime * result
+					+ ((segment == null) ? 0 : segment.hashCode());
+			return result;
+		}
+		
+		
+		
+	}
+	
 	static final float getAngleDifference(final float from, final float to) {
 		final float transCurrent = to - from;
 		
@@ -83,57 +165,43 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		return (getAngleDifference(lastAngle, currentAngle) > 0) ? Direction.Left : Direction.Right;
 	}
 	
-	private SortedMap/*<Float, ResistorBind>*/ buildViewport(final LightSource source, final List nearResistors) {
-		final SortedMap viewport = new TreeMap();
+	static final SortedMap/*<Float, ViewportPoint>*/ buildViewport(final LightSource source, final List/*<LightResistor>*/ nearResistors) {
 		
-		float x, y;
-		float angle = 0, lastAngle;
+		// build viewport
+		final SortedMap/*<Float, ViewportPoint>*/ viewport = new TreeMap();
 		
-		float leftMostAngle, rightMostAngle;
-		int leftMostIndex, rightMostIndex;
-		boolean firstPoint;
-		int index;
-		
-		// keeps the angle => verticle index map to find boundary verticles
-//		final SortedMap<Float, Integer> angleIndexMap = new TreeMap<Float, Integer>();
+		// make segments from all resistors and extract the points
+		final List/*<ResistorSegment>*/ segments = new LinkedList();
+//		final List/*<ViewportPoint>*/ points = new LinkedList();
 		
 		for (final Iterator itor = nearResistors.iterator(); itor.hasNext();) {
-			final LightResistor r = (LightResistor) itor.next();
+			final LightResistor resistor = (LightResistor) itor.next();
 			
-			firstPoint = true;
-			index = -1;
-			
-			final Point2[] verticles = r.getVerticles();
+			final Point2[] verticles = resistor.getVerticles();
 			
 			for (int i = 0; i < verticles.length; ++i) {
-				final Point2 p = verticles[i];
+				final int i2 = (i + 1 >= verticles.length) ? i + 1 - verticles.length : i + 1;
 				
-				++index;
+				final ResistorSegment segment = new ResistorSegment(
+					resistor,
+					verticles[i].x, verticles[i].y,
+					verticles[i2].x, verticles[i2].y
+				); 
 				
-				// let's move light source to the origin of 2-dimensional world.
-				x = p.x - source.x;
-				y = p.y - source.y;
+				segments.add(segment);
 				
-				// get the angle
-				lastAngle = angle;
-				angle = Vector2.angle(x, y);
+				// extract point from this segment
+				final ViewportPoint point1 = new ViewportPoint(source, segment, segment.x1, segment.y1);
+				final ViewportPoint point2 = new ViewportPoint(source, segment, segment.x2, segment.y2);
 				
-				if (firstPoint) {
-					// let's say for now that this is left-most and right-most point
-					leftMostIndex = rightMostIndex = index;
-					leftMostAngle = rightMostAngle = angle;
-					
-					firstPoint = false;
-					
-					continue;
-				}
-				
-				
+				viewport.put(new Float(point1.angle), point1);
+				viewport.put(new Float(point2.angle), point2);
 			}
 		}
 		
 		return viewport;
 	}
+	
 	
 	/*
 	 * @see pl.graniec.coralreef.light2d.AbstractLightingAlgorithm#createRays(pl.graniec.coralreef.light2d.LightSource)

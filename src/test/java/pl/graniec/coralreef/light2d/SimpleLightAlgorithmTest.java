@@ -28,8 +28,14 @@
  */
 package pl.graniec.coralreef.light2d;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.SortedMap;
+
 import junit.framework.TestCase;
-import pl.graniec.coralreef.light2d.SimpleLightAlgorithm.Direction;
+import pl.graniec.coralreef.geometry.Point2;
+import pl.graniec.coralreef.light2d.SimpleLightAlgorithm.ViewportPoint;
 
 /**
  * @author Piotr Korzuszek <piotr.korzuszek@gmail.com>
@@ -37,35 +43,74 @@ import pl.graniec.coralreef.light2d.SimpleLightAlgorithm.Direction;
  */
 public class SimpleLightAlgorithmTest extends TestCase {
 
-	public void setUp() throws Exception {
+	/*
+	 * @see junit.framework.TestCase#setUp()
+	 */
+	protected void setUp() throws Exception {
+		super.setUp();
 	}
 
-	public void tearDown() throws Exception {
+	/*
+	 * @see junit.framework.TestCase#tearDown()
+	 */
+	protected void tearDown() throws Exception {
+		super.tearDown();
 	}
 
 	/**
-	 * Test method for {@link pl.graniec.coralreef.light2d.SimpleLightAlgorithm#getDirection(float, float)}.
+	 * Test method for {@link pl.graniec.coralreef.light2d.SimpleLightAlgorithm#buildViewport(pl.graniec.coralreef.light2d.LightSource, java.util.List)}.
 	 */
-	public void testGetDirection() {
-		assertEquals(Direction.Left, SimpleLightAlgorithm.getDirection(0, 45));
-		assertEquals(Direction.Right, SimpleLightAlgorithm.getDirection(45, 0));
+	public void testBuildViewport() {
 		
-		assertEquals(Direction.Left, SimpleLightAlgorithm.getDirection(-45, 45));
-		assertEquals(Direction.Right, SimpleLightAlgorithm.getDirection(45, -45));
+		final List resistors = new LinkedList(); 
 		
-		assertEquals(Direction.Left, SimpleLightAlgorithm.getDirection(170, -170));
-		assertEquals(Direction.Right, SimpleLightAlgorithm.getDirection(-170, 170));
-	}
-	
-	public void testGetAngleDifference() {
-		assertEquals(45f, SimpleLightAlgorithm.getAngleDifference(0, 45), 0.0001f);
-		assertEquals(-45f, SimpleLightAlgorithm.getAngleDifference(45, 0), 0.0001f);
+		final LightResistor r1 = new LightResistor();
+		r1.addVerticle(new Point2(2, 2));
+		r1.addVerticle(new Point2(2, 6));
+		r1.addVerticle(new Point2(-2, 6));
+		r1.addVerticle(new Point2(-2, 2));
 		
-		assertEquals(90f, SimpleLightAlgorithm.getAngleDifference(-45, 45), 0.0001f);
-		assertEquals(-90f, SimpleLightAlgorithm.getAngleDifference(45, -45), 0.0001f);
+		resistors.add(r1);
 		
-		assertEquals(20f, SimpleLightAlgorithm.getAngleDifference(170, -170), 0.0001f);
-		assertEquals(-20f, SimpleLightAlgorithm.getAngleDifference(-170, 170), 0.0001f);
+		final LightSource source = new LightSource(0, 0, 100);
+		
+		final SortedMap viewport = SimpleLightAlgorithm.buildViewport(source, resistors);
+		
+		final Iterator itor = viewport.keySet().iterator();
+		Float angle;
+		ViewportPoint point;
+		
+		angle = (Float) itor.next();
+		point = (ViewportPoint) viewport.get(angle);
+		
+		assertEquals(45f, angle.floatValue(), 0f);
+		assertEquals(2f, point.x, 0f);
+		assertEquals(2f, point.y, 0f);
+		
+		
+		angle = (Float) itor.next();
+		point = (ViewportPoint) viewport.get(angle);
+		
+		assertEquals(71.56f, angle.floatValue(), 0.01f);
+		assertEquals(2f, point.x, 0f);
+		assertEquals(6f, point.y, 0f);
+		
+		
+		angle = (Float) itor.next();
+		point = (ViewportPoint) viewport.get(angle);
+		
+		assertEquals(108.43f, angle.floatValue(), 0.01f);
+		assertEquals(-2f, point.x, 0f);
+		assertEquals(6f, point.y, 0f);
+		
+		
+		angle = (Float) itor.next();
+		point = (ViewportPoint) viewport.get(angle);
+		
+		assertEquals(135f, angle.floatValue(), 0f);
+		assertEquals(-2f, point.x, 0f);
+		assertEquals(2f, point.y, 0f);
+		
 	}
 
 }
