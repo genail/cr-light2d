@@ -33,7 +33,6 @@ import java.awt.Graphics;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.SortedMap;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -112,40 +111,35 @@ public class SimpleLightAlgorithmTest extends TestCase {
 		
 		final LightSource source = new LightSource(0, 0, 100);
 		
-		final SortedMap viewport = SimpleLightAlgorithm.buildViewport(source, resistors);
+		final List viewport = SimpleLightAlgorithm.buildViewport(source, resistors);
 		
-		final Iterator itor = viewport.keySet().iterator();
-		Float angle;
+		final Iterator itor = viewport.iterator();
 		ViewportPoint point;
 		
-		angle = (Float) itor.next();
-		point = (ViewportPoint) viewport.get(angle);
+		point = (ViewportPoint) itor.next();
 		
-		assertEquals(45f, angle.floatValue(), 0f);
+		assertEquals(45f, point.angle, 0f);
 		assertEquals(2f, point.x, 0f);
 		assertEquals(2f, point.y, 0f);
 		
 		
-		angle = (Float) itor.next();
-		point = (ViewportPoint) viewport.get(angle);
+		point = (ViewportPoint) itor.next();
 		
-		assertEquals(71.56f, angle.floatValue(), 0.01f);
+		assertEquals(71.56f, point.angle, 0.01f);
 		assertEquals(2f, point.x, 0f);
 		assertEquals(6f, point.y, 0f);
 		
 		
-		angle = (Float) itor.next();
-		point = (ViewportPoint) viewport.get(angle);
+		point = (ViewportPoint) itor.next();
 		
-		assertEquals(108.43f, angle.floatValue(), 0.01f);
+		assertEquals(108.43f, point.angle, 0.01f);
 		assertEquals(-2f, point.x, 0f);
 		assertEquals(6f, point.y, 0f);
 		
 		
-		angle = (Float) itor.next();
-		point = (ViewportPoint) viewport.get(angle);
+		point = (ViewportPoint) itor.next();
 		
-		assertEquals(135f, angle.floatValue(), 0f);
+		assertEquals(135f, point.angle, 0f);
 		assertEquals(-2f, point.x, 0f);
 		assertEquals(2f, point.y, 0f);
 		
@@ -168,10 +162,15 @@ public class SimpleLightAlgorithmTest extends TestCase {
 		
 		System.out.println(rays);
 		
+		final Point2[] verts = rays.getVerticles();
+		for (int i = 0; i < verts.length; ++i) {
+			frame.addPoint(new Point2(verts[i].x, verts[i].y));
+		}
+		
 //		frame.addPoint(new Point2(100, 100));
-//		frame.setVisible(true);
-//		
-//		Thread.sleep(5000);
+		frame.setVisible(true);
+		
+		Thread.sleep(5000);
 		
 	}
 

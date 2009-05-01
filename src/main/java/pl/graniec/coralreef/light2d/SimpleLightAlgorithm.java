@@ -28,6 +28,8 @@
  */
 package pl.graniec.coralreef.light2d;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -90,15 +92,6 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		final float angle;
 		ViewportPoint other;
 
-		public ViewportPoint(final LightSource source, final ResistorSegment segment, float x, float y) {
-			super(x - source.x, y - source.y);
-			this.segment = segment;
-			
-			this.angle = Vector2.angle(this.x, this.y);
-		}
-		
-		
-		
 		public ViewportPoint(final ResistorSegment segment, float x, float y) {
 			super(x, y);
 			this.segment = segment;
@@ -176,10 +169,11 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		return (getAngleDifference(lastAngle, currentAngle) > 0) ? Direction.Left : Direction.Right;
 	}
 	
-	static final SortedMap/*<Float, ViewportPoint>*/ buildViewport(final LightSource source, final List/*<LightResistor>*/ nearResistors) {
+	static final List/*<ViewportPoint>*/ buildViewport(final LightSource source, final List/*<LightResistor>*/ nearResistors) {
 		
 		// build viewport
-		final SortedMap/*<Float, ViewportPoint>*/ viewport = new TreeMap();
+		final List/*<Float, ViewportPoint>*/ viewport = new LinkedList();
+		
 		
 		// make segments from all resistors and extract the points
 		final List/*<ResistorSegment>*/ segments = new LinkedList();
@@ -195,24 +189,25 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 				
 				final ResistorSegment segment = new ResistorSegment(
 					resistor,
-					verticles[i].x, verticles[i].y,
-					verticles[i2].x, verticles[i2].y
+					verticles[i].x - source.x, verticles[i].y - source.y,
+					verticles[i2].x - source.x, verticles[i2].y - source.y
 				); 
 				
 				segments.add(segment);
 				
 				// extract point from this segment
-				final ViewportPoint point1 = new ViewportPoint(source, segment, segment.x1, segment.y1);
-				final ViewportPoint point2 = new ViewportPoint(source, segment, segment.x2, segment.y2);
+				final ViewportPoint point1 = new ViewportPoint(segment, segment.x1, segment.y1);
+				final ViewportPoint point2 = new ViewportPoint(segment, segment.x2, segment.y2);
 				
 				point1.other = point2;
 				point2.other = point1;
 				
-				viewport.put(new Float(point1.angle), point1);
-				viewport.put(new Float(point2.angle), point2);
+				viewport.add(point1);
+				viewport.add(point2);
 			}
 		}
 		
+		Collections.sort(viewport);
 		return viewport;
 	}
 	
@@ -245,7 +240,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		// The resistors bounding points exists in resistor geomery as one
 		// of its verticles.
 		
-		final SortedMap viewport = buildViewport(source, nearResistors);
+		final List viewport = buildViewport(source, nearResistors);
 		
 		// get the actions that are open on 180 angle
 		final List/*<ViewportPoint>*/ openActions = new LinkedList(); 
@@ -277,9 +272,8 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		// go thru all points and create a light geometry
 		final Geometry light = new Geometry();
 		
-		for (final Iterator keyItor = viewport.keySet().iterator(); keyItor.hasNext();) {
-			final Float key = (Float) keyItor.next();
-			final ViewportPoint point = (ViewportPoint) viewport.get(key);
+		for (final Iterator itor = viewport.iterator(); itor.hasNext();) {
+			final ViewportPoint point = (ViewportPoint) itor.next();
 			
 			if (isVisible(point, viewport, openActions)) {
 				light.addVerticle(new Point2(point.x + source.x, point.y + source.y));
@@ -294,8 +288,8 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 	 * The segment must be build from <code>point1</code> to <code>point2</code>
 	 * but only the first one is wanted.
 	 */
-	private ViewportPoint getPoint(Point2 point1, Point2 point2, SortedMap viewport) {
-		for (final Iterator itor = viewport.values().iterator(); itor.hasNext();) {
+	private ViewportPoint getPoint(final Point2 point1, final Point2 point2, final List viewport) {
+		for (final Iterator itor = viewport.iterator(); itor.hasNext();) {
 			final ViewportPoint vp = (ViewportPoint) itor.next();
 			final ResistorSegment segment = vp.segment;
 			
@@ -321,11 +315,11 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		return null;
 	}
 
-	static final boolean isVisible(ViewportPoint point, SortedMap viewport, List/*ViewportPoint*/ openActions) {
+	static final boolean isVisible(final ViewportPoint point, final List viewport, final List/*ViewportPoint*/ openActions) {
 		// make copy of actions
 		final Set/*<ViewportPoint>*/ actions = new HashSet(openActions);
 		
-		for (final Iterator itor = viewport.values().iterator(); itor.hasNext();) {
+		for (final Iterator itor = viewport.iterator(); itor.hasNext();) {
 			final ViewportPoint vp = (ViewportPoint) itor.next();
 			
 			if (vp.angle > point.angle) {
