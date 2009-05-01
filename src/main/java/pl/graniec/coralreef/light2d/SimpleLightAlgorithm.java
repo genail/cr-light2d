@@ -28,9 +28,11 @@
  */
 package pl.graniec.coralreef.light2d;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -86,11 +88,20 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 
 		final ResistorSegment segment;
 		final float angle;
+		ViewportPoint other;
 
 		public ViewportPoint(final LightSource source, final ResistorSegment segment, float x, float y) {
 			super(x - source.x, y - source.y);
 			this.segment = segment;
 			
+			this.angle = Vector2.angle(this.x, this.y);
+		}
+		
+		
+		
+		public ViewportPoint(final ResistorSegment segment, float x, float y) {
+			super(x, y);
+			this.segment = segment;
 			this.angle = Vector2.angle(this.x, this.y);
 		}
 
@@ -194,6 +205,9 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 				final ViewportPoint point1 = new ViewportPoint(source, segment, segment.x1, segment.y1);
 				final ViewportPoint point2 = new ViewportPoint(source, segment, segment.x2, segment.y2);
 				
+				point1.other = point2;
+				point2.other = point1;
+				
 				viewport.put(new Float(point1.angle), point1);
 				viewport.put(new Float(point2.angle), point2);
 			}
@@ -209,7 +223,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 	public Geometry createRays(final LightSource source) {
 		
 		// build resistors list that can make the shadow (its near light source)
-		final List nearResistors = determineNearResistors(source);
+		final List/*<LightResistor>*/ nearResistors = determineNearResistors(source);
 		
 		// Create one dimensional axis with left and right side point of a
 		// resistor like this:
@@ -233,7 +247,119 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		
 		final SortedMap viewport = buildViewport(source, nearResistors);
 		
+		// get the actions that are open on 180 angle
+		final List/*<ViewportPoint>*/ openActions = new LinkedList(); 
+		
+		final Segment borderSegment = new Segment(0, 0, 0, -source.intensity);
+		
+		for (final Iterator itor = nearResistors.iterator(); itor.hasNext();) {
+			final LightResistor resistor = (LightResistor) itor.next();
+			
+			// TODO: Can be optimized to only bounding box check
+			// if only resistor has more than 4 verticles
+			final Point2[] points = resistor.getVerticles();
+			
+			for (int i = 0; i < points.length; ++i) {
+				final Point2 p1 = points[i];
+				final Point2 p2 = points[(i + 1 >= points.length) ? i + 1 - points.length : i + 1];
+				
+				final Segment segment = new Segment(p1, p2);
+				
+				if (segment.intersects(borderSegment)) {
+					// got intersection. Get point with y >= 0
+					final ViewportPoint vp = getPoint((p1.y >= 0 ? p1 : p2), (p1.y >= 0 ? p2 : p1), viewport);
+					// adding to open actions
+					openActions.add(vp);
+				}
+			}
+		}
+		
+		// go thru all points and create a light geometry
+		final Geometry light = new Geometry();
+		
+		for (final Iterator keyItor = viewport.keySet().iterator(); keyItor.hasNext();) {
+			final Float key = (Float) keyItor.next();
+			final ViewportPoint point = (ViewportPoint) viewport.get(key);
+			
+			if (isVisible(point, viewport, openActions)) {
+				light.addVerticle(new Point2(point.x + source.x, point.y + source.y));
+			}
+		}
+		
+		return light;
+	}
+
+	/**
+	 * Gets the segment point <code>point1</code> from viewport.
+	 * The segment must be build from <code>point1</code> to <code>point2</code>
+	 * but only the first one is wanted.
+	 */
+	private ViewportPoint getPoint(Point2 point1, Point2 point2, SortedMap viewport) {
+		for (final Iterator itor = viewport.values().iterator(); itor.hasNext();) {
+			final ViewportPoint vp = (ViewportPoint) itor.next();
+			final ResistorSegment segment = vp.segment;
+			
+			if (
+					point1.x == segment.x1 &&
+					point1.y == segment.y1 &&
+					point2.x == segment.x2 &&
+					point2.y == segment.y2
+					) {
+				return new ViewportPoint(segment, point1.x, point1.y);
+			}
+			else if (
+					point2.x == segment.x1 &&
+					point2.y == segment.y1 &&
+					point1.x == segment.x2 &&
+					point1.y == segment.y2
+					) {
+				return new ViewportPoint(segment, point2.x, point2.y);
+			}
+			
+		}
+		
 		return null;
+	}
+
+	static final boolean isVisible(ViewportPoint point, SortedMap viewport, List/*ViewportPoint*/ openActions) {
+		// make copy of actions
+		final Set/*<ViewportPoint>*/ actions = new HashSet(openActions);
+		
+		for (final Iterator itor = viewport.values().iterator(); itor.hasNext();) {
+			final ViewportPoint vp = (ViewportPoint) itor.next();
+			
+			if (vp.angle > point.angle) {
+				// this is the break point
+				// where intersection should be checked
+				break;
+			}
+			
+			if (actions.contains(vp)) {
+				System.err.println("" + vp + "already in actions list");
+				continue;
+			}
+			
+			if (actions.remove(vp.other)) {
+				// action removed. That's perfectly ok!
+				continue;
+			}
+			
+			actions.add(vp);
+			
+		}
+		
+		// check intersection with all segments
+		final Segment checkedSegment = new Segment(0, 0, point.x, point.y);
+		
+		for (final Iterator itor = actions.iterator(); itor.hasNext();) {
+			final Segment otherSegment = ((ViewportPoint) itor.next()).segment;
+			
+			if (checkedSegment.intersects(otherSegment)) {
+				return false;
+			}
+		}
+		
+		return true;
 	}
 
 	/**

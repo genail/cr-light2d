@@ -28,12 +28,18 @@
  */
 package pl.graniec.coralreef.light2d;
 
+import java.awt.Color;
+import java.awt.Graphics;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedMap;
 
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
 import junit.framework.TestCase;
+import pl.graniec.coralreef.geometry.Geometry;
 import pl.graniec.coralreef.geometry.Point2;
 import pl.graniec.coralreef.light2d.SimpleLightAlgorithm.ViewportPoint;
 
@@ -42,6 +48,38 @@ import pl.graniec.coralreef.light2d.SimpleLightAlgorithm.ViewportPoint;
  *
  */
 public class SimpleLightAlgorithmTest extends TestCase {
+	
+	private class DisplayFrame extends JFrame {
+		
+		private class CustomPanel extends JPanel {
+			public CustomPanel() {
+			}
+			
+			public void paint(Graphics g) {
+				g.setColor(Color.white);
+				g.fillRect(0, 0, getWidth(), getHeight());
+				
+				g.setColor(Color.black);
+				
+				for (Iterator itor = points.iterator(); itor.hasNext();) {
+					Point2 point = (Point2) itor.next();
+					g.drawLine((int) point.x, (int) point.y, (int) point.x, (int) point.y);
+				}
+			}
+		}
+		
+		CustomPanel panel = new CustomPanel();
+		List points = new LinkedList();
+		
+		public DisplayFrame() {
+			add(panel);
+			setSize(640, 480);
+		}
+		
+		public void addPoint(Point2 point) {
+			points.add(point);
+		}
+	}
 
 	/*
 	 * @see junit.framework.TestCase#setUp()
@@ -110,6 +148,30 @@ public class SimpleLightAlgorithmTest extends TestCase {
 		assertEquals(135f, angle.floatValue(), 0f);
 		assertEquals(-2f, point.x, 0f);
 		assertEquals(2f, point.y, 0f);
+		
+	}
+	
+	public void testOverall() throws InterruptedException {
+		
+		final DisplayFrame frame = new DisplayFrame();
+		final SimpleLightAlgorithm algorithm = new SimpleLightAlgorithm();
+		
+		final LightSource light = new LightSource(320, 240, 300);
+		final LightResistor resistor = new LightResistor();
+		resistor.addVerticle(new Point2(340, 220));
+		resistor.addVerticle(new Point2(340, 200));
+		resistor.addVerticle(new Point2(300, 200));
+		resistor.addVerticle(new Point2(300, 220));
+		
+		algorithm.addLightResistor(resistor);
+		final Geometry rays = algorithm.createRays(light);
+		
+		System.out.println(rays);
+		
+//		frame.addPoint(new Point2(100, 100));
+//		frame.setVisible(true);
+//		
+//		Thread.sleep(5000);
 		
 	}
 
