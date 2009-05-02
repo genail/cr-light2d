@@ -28,15 +28,12 @@
  */
 package pl.graniec.coralreef.light2d;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import pl.graniec.coralreef.geometry.Box2;
 import pl.graniec.coralreef.geometry.Geometry;
@@ -329,7 +326,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		for (final Iterator itor = viewport.iterator(); itor.hasNext();) {
 			final ViewportPoint vp = (ViewportPoint) itor.next();
 			
-			if (vp.angle > point.angle) {
+			if (vp.angle >= point.angle) {
 				// this is the break point
 				// where intersection should be checked
 				break;
@@ -396,7 +393,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			if (distance <= source.intensity) {
 				// this is most probably in light radius
 				result.add(r);
-				break;
+				continue;
 			}
 			
 			// check the other 3 bounding verticles
