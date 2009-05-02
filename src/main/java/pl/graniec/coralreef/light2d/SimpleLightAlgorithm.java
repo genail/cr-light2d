@@ -245,7 +245,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		// get the actions that are open on 180 angle
 		final List/*<ViewportPoint>*/ openActions = new LinkedList(); 
 		
-		final Segment borderSegment = new Segment(0, 0, 0, -source.intensity);
+		final Segment borderSegment = new Segment(0, 0, -source.intensity, 0);
 		
 		for (final Iterator itor = nearResistors.iterator(); itor.hasNext();) {
 			final LightResistor resistor = (LightResistor) itor.next();
@@ -255,8 +255,10 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			final Point2[] points = resistor.getVerticles();
 			
 			for (int i = 0; i < points.length; ++i) {
-				final Point2 p1 = points[i];
-				final Point2 p2 = points[(i + 1 >= points.length) ? i + 1 - points.length : i + 1];
+				final int i2 = i + 1 >= points.length ? i + 1 - points.length : i + 1;
+				
+				final Point2 p1 = new Point2(points[i].x - source.x, points[i].y - source.y);
+				final Point2 p2 = new Point2(points[i2].x - source.x, points[i2].y - source.y);
 				
 				final Segment segment = new Segment(p1, p2);
 				
@@ -270,14 +272,21 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		}
 		
 		// go thru all points and create a light geometry
-		final Geometry light = new Geometry();
+		// but first create a hash set to remove duplicates
+		final Set/*<Point2>*/ points = new HashSet();
 		
 		for (final Iterator itor = viewport.iterator(); itor.hasNext();) {
 			final ViewportPoint point = (ViewportPoint) itor.next();
 			
 			if (isVisible(point, viewport, openActions)) {
-				light.addVerticle(new Point2(point.x + source.x, point.y + source.y));
+				points.add(new Point2(point.x + source.x, point.y + source.y));
 			}
+		}
+		
+		final Geometry light = new Geometry();
+		
+		for (final Iterator itor = points.iterator(); itor.hasNext();) {
+			light.addVerticle((Point2) itor.next());
 		}
 		
 		return light;
@@ -298,17 +307,15 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 					point1.y == segment.y1 &&
 					point2.x == segment.x2 &&
 					point2.y == segment.y2
-					) {
-				return new ViewportPoint(segment, point1.x, point1.y);
-			}
-			else if (
+					||
 					point2.x == segment.x1 &&
 					point2.y == segment.y1 &&
 					point1.x == segment.x2 &&
 					point1.y == segment.y2
 					) {
-				return new ViewportPoint(segment, point2.x, point2.y);
+				return new ViewportPoint(segment, point1.x, point1.y);
 			}
+			
 			
 		}
 		
@@ -329,7 +336,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			}
 			
 			if (actions.contains(vp)) {
-				System.err.println("" + vp + "already in actions list");
+				System.err.println("" + vp + " already in actions list");
 				continue;
 			}
 			

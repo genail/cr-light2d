@@ -46,6 +46,17 @@ public class LightResistor extends Geometry {
 	/** Bounding box of this geometry. If null then it must be created. */
 	private Box2 bbox;
 	
+	public LightResistor() {
+	}
+	
+	public LightResistor(final Geometry geometry) {
+		final Point2[] points = geometry.getVerticles();
+		
+		for (int i = 0; i < points.length; ++i) {
+			super.addVerticle(points[i]);
+		}
+	}
+	
 	/*
 	 * @see pl.graniec.coralreef.geometry.Geometry#addVerticle(pl.graniec.coralreef.geometry.Point2)
 	 */

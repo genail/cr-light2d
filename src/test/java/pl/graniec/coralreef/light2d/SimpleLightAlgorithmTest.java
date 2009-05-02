@@ -150,7 +150,8 @@ public class SimpleLightAlgorithmTest extends TestCase {
 		final DisplayFrame frame = new DisplayFrame();
 		final SimpleLightAlgorithm algorithm = new SimpleLightAlgorithm();
 		
-		final LightSource light = new LightSource(320, 240, 300);
+		final LightSource light = new LightSource(360, 210, 300);
+		
 		final LightResistor resistor = new LightResistor();
 		resistor.addVerticle(new Point2(340, 220));
 		resistor.addVerticle(new Point2(340, 200));
