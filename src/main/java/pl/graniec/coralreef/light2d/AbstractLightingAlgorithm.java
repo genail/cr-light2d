@@ -40,10 +40,36 @@ import pl.graniec.coralreef.geometry.Geometry;
 public abstract class AbstractLightingAlgorithm {
 	/** All light resistors */
 	protected final Set resistors = new HashSet();
+	/** Number of parts of which light with no resistance should be build of */
+	protected int partsNum = 32;
 	
 	public void addLightResistor(LightResistor resistor) {
 		resistors.add(resistor);
 	}
 	
-	public abstract Geometry createRays(LightSource source); 
+	public abstract Geometry createRays(LightSource source);
+	
+	/**
+	 * See {@link #setPartsNum(int)}
+	 * 
+	 * @return Number of parts of light without resistance.
+	 * 
+	 */
+	public int getPartsNum() {
+		return partsNum;
+	}
+	
+	/**
+	 * Sets the number of parts that light geometry without any resistance
+	 * should be build of. If there is resistors in light radius, then
+	 * geometry will match to resistor geometry in occurrence position
+	 * in order to simulate natural behavior of light.
+	 * <p>
+	 * By default number of parts is set to <code>32</code>.
+	 * 
+	 * @param partsNum The number of parts.
+	 */
+	public void setPartsNum(int partsNum) {
+		this.partsNum = partsNum;
+	} 
 }

@@ -271,13 +271,31 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		// go thru all points and create a light geometry
 		// but first create a hash set to remove duplicates
 		final Set/*<Point2>*/ points = new HashSet();
+		final float delta = 360f / partsNum;
+		float position = -180f;
 		
 		for (final Iterator itor = viewport.iterator(); itor.hasNext();) {
 			final ViewportPoint point = (ViewportPoint) itor.next();
+		
+			// non-resistance rays
+			while (point.angle - position > delta) {
+				position += delta;
+				tryPoint(position, source, points, viewport, openActions);
+			}
 			
 			if (isVisible(point, viewport, openActions)) {
+				tryPoint(point.angle - 0.1f, source, points, viewport, openActions);
 				points.add(new Point2(point.x + source.x, point.y + source.y));
+				tryPoint(point.angle + 0.1f, source, points, viewport, openActions);
 			}
+			
+			position = point.angle;
+		}
+		
+		// end non-resistance rays
+		while (position <= 180f) {
+			position += delta;
+			tryPoint(position, source, points, viewport, openActions);
 		}
 		
 		final Geometry light = new Geometry();
@@ -287,6 +305,25 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		}
 		
 		return light;
+	}
+	
+	private void tryPoint(
+			final float angle,
+			final LightSource source,
+			final Set/*<Point2>*/ points,
+			final List/*<ViewportPoint>*/ viewport,
+			final List/*<ViewportPoint>*/ openActions) {
+	
+		final float rad = (float) Math.toRadians(angle);
+		
+		final float x = (float) Math.cos(rad) * source.intensity;
+		final float y = (float) Math.sin(rad) * source.intensity;
+		
+		final ViewportPoint point = new ViewportPoint(null, x, y);
+		
+		if (isVisible(point, viewport, openActions)) {
+			points.add(new Point2(point.x + source.x, point.y + source.y));
+		}
 	}
 
 	/**
