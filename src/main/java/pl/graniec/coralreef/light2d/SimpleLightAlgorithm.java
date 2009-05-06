@@ -31,6 +31,7 @@ package pl.graniec.coralreef.light2d;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -54,18 +55,6 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		
 		private Direction() {
 		}
-	}
-	
-	private static final class ResistorBind {
-		final LightResistor resistor;
-		final int pointIndex;
-		
-		public ResistorBind(LightResistor resistor, int pointIndex) {
-			super();
-			this.resistor = resistor;
-			this.pointIndex = pointIndex;
-		}
-		
 	}
 	
 	private static final class ResistorSegment extends Segment {
@@ -260,17 +249,37 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 				final Segment segment = new Segment(p1, p2);
 				
 				if (segment.intersects(borderSegment)) {
+					
+					// if one point is on border segment and the other
+					// on the positive y half, then ignore this intersection
+					if (
+							p1.y == 0 && -p1.x <= source.intensity && p2.y >= 0
+							||
+							p2.y == 0 && -p2.x <= source.intensity && p1.y >= 0
+							) {
+						continue;
+					}
+					
 					// got intersection. Get point with y >= 0
 					final ViewportPoint vp = getPoint((p1.y >= 0 ? p1 : p2), (p1.y >= 0 ? p2 : p1), viewport);
 					// adding to open actions
+					
 					openActions.add(vp);
+				}
+				// check also if there are points that lies on the border segment
+				// then this can be a open actions too
+				else if (p1.y == 0 && p1.x < 0 && -p1.x <= source.intensity && p2.y < 0) {
+					openActions.add(getPoint(p1, p2, viewport));
+				}
+				else if (p2.y == 0 && p2.x < 0 && -p2.x <= source.intensity && p1.y < 0) {
+					openActions.add(getPoint(p2, p1, viewport));
 				}
 			}
 		}
 		
 		// go thru all points and create a light geometry
 		// but first create a hash set to remove duplicates
-		final Set/*<Point2>*/ points = new HashSet();
+		final Set/*<Point2>*/ points = new LinkedHashSet();
 		final float delta = 360f / partsNum;
 		float position = -180f;
 		
@@ -293,7 +302,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		}
 		
 		// end non-resistance rays
-		while (position <= 180f) {
+		while (position + delta <= 180f) {
 			position += delta;
 			tryPoint(position, source, points, viewport, openActions);
 		}
