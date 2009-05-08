@@ -18,12 +18,6 @@
     <name>Coral Reef 2D Lighting Library</name>
     <url>http://graniec.pl/</url>
     
-    <scm>
-        <connection>scm:svn:svn://atom/general/CoralReef/trunk/cr-light2d</connection>
-        <developerConnection>scm:svn:svn://atom/general/CoralReef/trunk/cr-light2d</developerConnection>
-        <url>svn://atom/general/CoralReef/trunk/cr-light2d</url>
-    </scm>
-
     <dependencies>
     
         <!-- Geometry Library -->
