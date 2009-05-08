@@ -13,7 +13,7 @@
     <groupId>pl.graniec</groupId>
     <artifactId>cr-light2d</artifactId>
     <packaging>jar</packaging>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
     
     <name>Coral Reef 2D Lighting Library</name>
     <url>http://graniec.pl/</url>
@@ -24,7 +24,7 @@
         <dependency>
             <groupId>pl.graniec</groupId>
             <artifactId>cr-geometry</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.1</version>
         </dependency>
     
         <!-- JUnit -->
