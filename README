@@ -1,1 +1,26 @@
-Nothing here yet
+   ______                 __   ____            ____
+  / ____/___  _________ _/ /  / __ \___  ___  / __/
+ / /   / __ \/ ___/ __ `/ /  / /_/ / _ \/ _ \/ /_  
+/ /___/ /_/ / /  / /_/ / /  / _, _/  __/  __/ __/  
+\____/\____/_/   \__,_/_/  /_/ |_|\___/\___/_/     
+                                                   
+---------------------------------------------------
+> 
+> Library: cr-light2d
+> Dependencies: cr-geometry
+> 
+> Author:
+>     Piotr Korzuszek <piotr.korzuszek@gmail.com>
+> 
+---------------------------------------------------
+
+For more information about this project please visit
+the wiki page.
+
+http://wiki.graniec.pl/doku.php?id=cr-light2d:start
+
+
+Found a bug? That's good! Please report it on our
+bugtracker. No registration needed :-)
+
+http://mantis.graniec.pl/
