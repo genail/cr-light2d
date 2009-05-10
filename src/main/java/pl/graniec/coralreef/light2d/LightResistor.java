@@ -2,8 +2,6 @@ package pl.graniec.coralreef.light2d;
 import java.util.Collection;
 import java.util.Iterator;
 
-import javax.swing.Box;
-
 import pl.graniec.coralreef.geometry.Box2;
 import pl.graniec.coralreef.geometry.Geometry;
 import pl.graniec.coralreef.geometry.Point2;
