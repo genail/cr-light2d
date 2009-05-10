@@ -371,24 +371,24 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		
 		for (final Iterator itor = viewport.iterator(); itor.hasNext();) {
 			final ViewportPoint vp = (ViewportPoint) itor.next();
-			
-			if (vp.angle >= point.angle) {
-				// this is the break point
-				// where intersection should be checked
-				break;
-			}
-			
+
 			if (actions.contains(vp)) {
 				System.err.println("" + vp + " already in actions list");
 				continue;
+			}
+			
+			actions.add(vp);
+			
+			if (vp.angle > point.angle) {
+				// this is the break point
+				// where intersection should be checked
+				break;
 			}
 			
 			if (actions.remove(vp.other)) {
 				// action removed. That's perfectly ok!
 				continue;
 			}
-			
-			actions.add(vp);
 			
 		}
 		
