@@ -57,16 +57,16 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		}
 	}
 	
-	private static final class ResistorSegment extends Segment {
-		
-		final LightResistor resistor;
-
-		public ResistorSegment(final LightResistor resistor, float x1, float y1, float x2, float y2) {
-			super(x1, y1, x2, y2);
-			this.resistor = resistor;
-		}
-		
-	}
+//	private static final class ResistorSegment extends Segment {
+//		
+////		final LightResistor resistor;
+//
+//		public ResistorSegment(final LightResistor resistor, float x1, float y1, float x2, float y2) {
+//			super(x1, y1, x2, y2);
+////			this.resistor = resistor;
+//		}
+//		
+//	}
 	
 	/**
 	 * Segment point that can tell the angle on which it residents.
@@ -74,11 +74,11 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 	 */
 	static final class ViewportPoint extends Point2 implements Comparable {
 
-		final ResistorSegment segment;
+		final Segment segment;
 		final float angle;
 		ViewportPoint other;
 
-		public ViewportPoint(final ResistorSegment segment, float x, float y) {
+		public ViewportPoint(final Segment segment, float x, float y) {
 			super(x, y);
 			this.segment = segment;
 			this.angle = Vector2.angle(this.x, this.y);
@@ -155,46 +155,86 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		return (getAngleDifference(lastAngle, currentAngle) > 0) ? Direction.Left : Direction.Right;
 	}
 	
-	static final List/*<ViewportPoint>*/ buildViewport(final LightSource source, final List/*<LightResistor>*/ nearResistors) {
+	static final List/*<ViewportPoint>*/ buildViewport(final LightSource source, final List/*<Segments>*/ segments) {
 		
 		// build viewport
 		final List/*<Float, ViewportPoint>*/ viewport = new LinkedList();
 		
-		
-		// make segments from all resistors and extract the points
-		final List/*<ResistorSegment>*/ segments = new LinkedList();
-//		final List/*<ViewportPoint>*/ points = new LinkedList();
-		
-		for (final Iterator itor = nearResistors.iterator(); itor.hasNext();) {
-			final LightResistor resistor = (LightResistor) itor.next();
+		// get all points from segments
+		for (final Iterator itor = segments.iterator(); itor.hasNext();) {
+			final Segment segment = (Segment) itor.next();
 			
+			final ViewportPoint point1 = new ViewportPoint(segment, segment.x1, segment.y1);
+			final ViewportPoint point2 = new ViewportPoint(segment, segment.x2, segment.y2);
+			
+			point1.other = point2;
+			point2.other = point1;
+			
+			viewport.add(point1);
+			viewport.add(point2);
+		}
+		
+		return viewport;
+		
+	}
+	
+	/**
+	 * Translates all given <code>resistors</code> to segments.
+	 * 
+	 * @param resistors The resistors to translate.
+	 * 
+	 * @return Segments of all resistors.
+	 */
+	static final List/*<Segment>*/ buildSegments(final List/*<LightResistor>*/ resistors, final LightSource source) {
+		final List/*<Segment>*/ result = new LinkedList();
+		
+		for (final Iterator itor = resistors.iterator(); itor.hasNext();) {
+			final LightResistor resistor = (LightResistor) itor.next();
 			final Point2[] verticles = resistor.getVerticles();
 			
+			Point2 first = null, prev, next = null;
+			
 			for (int i = 0; i < verticles.length; ++i) {
-				final int i2 = (i + 1 >= verticles.length) ? i + 1 - verticles.length : i + 1;
+				prev = next;
+				next = verticles[i];
 				
-				final ResistorSegment segment = new ResistorSegment(
-					resistor,
-					verticles[i].x - source.x, verticles[i].y - source.y,
-					verticles[i2].x - source.x, verticles[i2].y - source.y
-				); 
+				if (first == null) {
+					first = next;
+				}
 				
-				segments.add(segment);
+				if (prev != null) {
+					
+					result.add(new Segment(prev, next));
+					
+//					result.add(
+//						new Segment(
+//							(Point2) new Point2(prev).substract(source),
+//							(Point2) new Point2(next).substract(source)
+//						)
+//					);
+				}
+			}
+			
+			if (verticles.length >= 3) {
+				result.add(new Segment(next, first));
 				
-				// extract point from this segment
-				final ViewportPoint point1 = new ViewportPoint(segment, segment.x1, segment.y1);
-				final ViewportPoint point2 = new ViewportPoint(segment, segment.x2, segment.y2);
-				
-				point1.other = point2;
-				point2.other = point1;
-				
-				viewport.add(point1);
-				viewport.add(point2);
+//				result.add(
+//					new Segment(
+//						(Point2) new Point2(next).substract(source),
+//						(Point2) new Point2(first).substract(source)
+//					)
+//				);
 			}
 		}
 		
-		Collections.sort(viewport);
-		return viewport;
+		return result;
+	}
+	
+	private void expandSegments(final List/*<Segment>*/ segments) {
+		for (final Iterator itor = segments.iterator(); itor.hasNext();) {
+			final Segment segment = (Segment) itor.next();
+			segment.resize(1.01f);
+		}
 	}
 	
 	
@@ -205,6 +245,15 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		
 		// build resistors list that can make the shadow (its near light source)
 		final List/*<LightResistor>*/ nearResistors = determineNearResistors(source);
+		
+		// build segments from this resistors
+		final List/*<Segment>*/ segments = buildSegments(nearResistors, source);
+		
+		// translate them to be relative to light source
+		makeRelative(segments, source);
+		
+		// expand all segments to prevent possible holes (calculation inaccuracy)
+		expandSegments(segments);
 		
 		// Create one dimensional axis with left and right side point of a
 		// resistor like this:
@@ -226,56 +275,13 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		// The resistors bounding points exists in resistor geomery as one
 		// of its verticles.
 		
-		final List viewport = buildViewport(source, nearResistors);
+		final List viewport/*<ViewportPoint>*/ = buildViewport(source, segments);
+		
+		// its very important to have this viewport sorted
+		Collections.sort(viewport);
 		
 		// get the actions that are open on 180 angle
-		final List/*<ViewportPoint>*/ openActions = new LinkedList(); 
-		
-		final Segment borderSegment = new Segment(0, 0, -source.intensity, 0);
-		
-		for (final Iterator itor = nearResistors.iterator(); itor.hasNext();) {
-			final LightResistor resistor = (LightResistor) itor.next();
-			
-			// TODO: Can be optimized to only bounding box check
-			// if only resistor has more than 4 verticles
-			final Point2[] points = resistor.getVerticles();
-			
-			for (int i = 0; i < points.length; ++i) {
-				final int i2 = i + 1 >= points.length ? i + 1 - points.length : i + 1;
-				
-				final Point2 p1 = new Point2(points[i].x - source.x, points[i].y - source.y);
-				final Point2 p2 = new Point2(points[i2].x - source.x, points[i2].y - source.y);
-				
-				final Segment segment = new Segment(p1, p2);
-				
-				if (segment.intersects(borderSegment)) {
-					
-					// if one point is on border segment and the other
-					// on the positive y half, then ignore this intersection
-					if (
-							p1.y == 0 && -p1.x <= source.intensity && p2.y >= 0
-							||
-							p2.y == 0 && -p2.x <= source.intensity && p1.y >= 0
-							) {
-						continue;
-					}
-					
-					// got intersection. Get point with y >= 0
-					final ViewportPoint vp = getPoint((p1.y >= 0 ? p1 : p2), (p1.y >= 0 ? p2 : p1), viewport);
-					// adding to open actions
-					
-					openActions.add(vp);
-				}
-				// check also if there are points that lies on the border segment
-				// then this can be a open actions too
-				else if (p1.y == 0 && p1.x < 0 && -p1.x <= source.intensity && p2.y < 0) {
-					openActions.add(getPoint(p1, p2, viewport));
-				}
-				else if (p2.y == 0 && p2.x < 0 && -p2.x <= source.intensity && p1.y < 0) {
-					openActions.add(getPoint(p2, p1, viewport));
-				}
-			}
-		}
+		final List/*<ViewportPoint>*/ startActions = getStartActions(segments, source, viewport); 
 		
 		// go thru all points and create a light geometry
 		// but first create a hash set to remove duplicates
@@ -289,13 +295,13 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			// non-resistance rays
 			while (point.angle - position > delta) {
 				position += delta;
-				tryPoint(position, source, points, viewport, openActions);
+				tryPoint(position, source, points, viewport, startActions);
 			}
 			
-			if (isVisible(point, viewport, openActions)) {
-				tryPoint(point.angle - 0.1f, source, points, viewport, openActions);
+			if (isVisible(point, viewport, startActions)) {
+				tryPoint(point.angle - 0.1f, source, points, viewport, startActions);
 				points.add(new Point2(point.x + source.x, point.y + source.y));
-				tryPoint(point.angle + 0.1f, source, points, viewport, openActions);
+				tryPoint(point.angle + 0.1f, source, points, viewport, startActions);
 			}
 			
 			position = point.angle;
@@ -304,7 +310,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		// end non-resistance rays
 		while (position + delta <= 180f) {
 			position += delta;
-			tryPoint(position, source, points, viewport, openActions);
+			tryPoint(position, source, points, viewport, startActions);
 		}
 		
 		final Geometry light = new Geometry();
@@ -316,6 +322,61 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		return light;
 	}
 	
+	private void makeRelative(final List segments, final LightSource source) {
+		for (final Iterator itor = segments.iterator(); itor.hasNext();) {
+			final Segment segment = (Segment) itor.next();
+			
+			segment.x1 -= source.x;
+			segment.x2 -= source.x;
+			segment.y1 -= source.y;
+			segment.y2 -= source.y;
+		}
+	}
+
+	private List/*<ViewportPoint>*/ getStartActions(final List/*<Segment*/ segments, final LightSource source, final List/*<ViewportPoint>*/ viewport) {
+		
+		final List/*<ViewportPoint>*/ startActions = new LinkedList();
+		
+		final Segment borderSegment = new Segment(0, 0, -source.intensity, 0);
+		
+		for (final Iterator itor = segments.iterator(); itor.hasNext();) {
+			final Segment segment = (Segment) itor.next();
+			
+			if (segment.intersects(borderSegment)) {
+				// if one point is on border segment and the other
+				// on the positive y half, then ignore this intersection
+				if (
+						segment.y1 == 0 && -segment.x1 <= source.intensity && segment.y2 >= 0 ||
+						segment.y2 == 0 && -segment.x2 <= source.intensity && segment.y1 >= 0
+						) {
+					continue;
+				}
+				
+				// got intersection. Get point with y >= 0
+				ViewportPoint vp;
+				
+				if (segment.y1 >= 0) {
+					vp = getPoint(new Point2(segment.x1, segment.y1), new Point2(segment.x2, segment.y2), viewport);
+				} else {
+					vp = getPoint(new Point2(segment.x2, segment.y2), new Point2(segment.x1, segment.y1), viewport);
+				}
+				
+				startActions.add(vp);
+			}
+			
+			// check also if there are points that lies on the border segment
+			// then this can be a open actions too
+			else if (segment.y1 == 0 && segment.x1 < 0 && -segment.x1 <= source.intensity && segment.y2 < 0) {
+				startActions.add(getPoint(new Point2(segment.x1, segment.y1), new Point2(segment.x2, segment.y2), viewport));
+			}
+			else if (segment.y2 == 0 && segment.x2 < 0 && -segment.x2 <= source.intensity && segment.y1 < 0) {
+				startActions.add(getPoint(new Point2(segment.x2, segment.y2), new Point2(segment.x1, segment.y1), viewport));
+			}
+		}
+		
+		return startActions;
+	}
+
 	private void tryPoint(
 			final float angle,
 			final LightSource source,
@@ -343,7 +404,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 	private ViewportPoint getPoint(final Point2 point1, final Point2 point2, final List viewport) {
 		for (final Iterator itor = viewport.iterator(); itor.hasNext();) {
 			final ViewportPoint vp = (ViewportPoint) itor.next();
-			final ResistorSegment segment = vp.segment;
+			final Segment segment = vp.segment;
 			
 			if (
 					point1.x == segment.x1 &&
@@ -362,7 +423,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			
 		}
 		
-		return null;
+		throw new RuntimeException("Point " + point1 + " and " + point2 + " as a segment not found");
 	}
 
 	static final boolean isVisible(final ViewportPoint point, final List viewport, final List/*ViewportPoint*/ openActions) {
@@ -396,6 +457,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		final Segment checkedSegment = new Segment(0, 0, point.x, point.y);
 		
 		for (final Iterator itor = actions.iterator(); itor.hasNext();) {
+//			System.out.println(((ViewportPoint) itor.next()).segment);
 			final Segment otherSegment = ((ViewportPoint) itor.next()).segment;
 			
 			if (checkedSegment.intersects(otherSegment)) {

@@ -28,22 +28,20 @@
  */
 package pl.graniec.coralreef.light2d;
 
+import pl.graniec.coralreef.geometry.Point2;
+
 /**
  * Source of the light. It exists as a point with no specified size.
  * 
  * @author Piotr Korzuszek <piotr.korzuszek@gmail.com>
  *
  */
-public class LightSource {
-	/** Position of the light */
-	public float x, y;
+public class LightSource extends Point2 {
 	/** Intensity of this light. This sets the length value of rays. */
 	public float intensity;
 	
 	public LightSource(float x, float y, float intensity) {
-		super();
-		this.x = x;
-		this.y = y;
+		super(x, y);
 		this.intensity = intensity;
 	}
 	
