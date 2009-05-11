@@ -203,27 +203,12 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 				}
 				
 				if (prev != null) {
-					
 					result.add(new Segment(prev, next));
-					
-//					result.add(
-//						new Segment(
-//							(Point2) new Point2(prev).substract(source),
-//							(Point2) new Point2(next).substract(source)
-//						)
-//					);
 				}
 			}
 			
 			if (verticles.length >= 3) {
 				result.add(new Segment(next, first));
-				
-//				result.add(
-//					new Segment(
-//						(Point2) new Point2(next).substract(source),
-//						(Point2) new Point2(first).substract(source)
-//					)
-//				);
 			}
 		}
 		
@@ -299,9 +284,9 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			}
 			
 			if (isVisible(point, viewport, startActions)) {
-				tryPoint(point.angle - 0.1f, source, points, viewport, startActions);
+				tryPoint(point.angle - 0.01f, source, points, viewport, startActions);
 				points.add(new Point2(point.x + source.x, point.y + source.y));
-				tryPoint(point.angle + 0.1f, source, points, viewport, startActions);
+				tryPoint(point.angle + 0.01f, source, points, viewport, startActions);
 			}
 			
 			position = point.angle;
