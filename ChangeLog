@@ -1,0 +1,4 @@
+0.2:
+
+- Resolved bad lighting issue (at some angles light could went through resistors)
+- Several optimalizations
