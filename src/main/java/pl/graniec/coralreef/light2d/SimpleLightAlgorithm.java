@@ -68,7 +68,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 //		
 //	}
 	
-	static final class AngledPoint extends Point2 implements Comparable {
+	static class AngledPoint extends Point2 implements Comparable {
 
 		final float angle;
 		
@@ -92,45 +92,56 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 				return 0;
 			}
 		}
+		
+		public int hashCode() {
+			final int prime = 31;
+			int result = super.hashCode();
+			result = prime * result + Float.floatToIntBits(angle);
+			return result;
+		}
+
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (!super.equals(obj))
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			AngledPoint other = (AngledPoint) obj;
+			if (Float.floatToIntBits(angle) != Float
+					.floatToIntBits(other.angle))
+				return false;
+			return true;
+		}
+
+		/*
+		 * @see java.lang.Object#toString()
+		 */
+		public String toString() {
+			return getClass().getSimpleName() + "[x=" + x + ",y=" + y + ",angle=" + angle + "]";
+		}
 	}
 	
 	/**
 	 * Segment point that can tell the angle on which it residents.
 	 *
 	 */
-	static final class ViewportPoint extends Point2 implements Comparable {
+	static final class ViewportPoint extends AngledPoint {
 
 		final Segment segment;
-		final float angle;
 		ViewportPoint other;
 
 		public ViewportPoint(final Segment segment, float x, float y) {
 			super(x, y);
 			this.segment = segment;
-			this.angle = Vector2.angle(this.x, this.y);
 		}
 
-		public int compareTo(Object obj) {
-			if (getClass() != obj.getClass()) {
-				throw new ClassCastException("cannnot cast " + obj.getClass() + " to " + getClass());
-			}
-			
-			final ViewportPoint other = (ViewportPoint) obj;
-			
-			if (angle < other.angle) {
-				return -1;
-			} else if (angle > other.angle) {
-				return +1;
-			} else {
-				return 0;
-			}
-		}
-		
-		/*
-		 * @see java.lang.Object#toString()
-		 */
-		public String toString() {
-			return getClass().getSimpleName() + "[x=" + x + ",y=" + y + ",angle=" + angle + "]";
+		public int hashCode() {
+			final int prime = 31;
+			int result = super.hashCode();
+			result = prime * result
+					+ ((segment == null) ? 0 : segment.hashCode());
+			return result;
 		}
 
 		public boolean equals(Object obj) {
@@ -141,8 +152,10 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			if (getClass() != obj.getClass())
 				return false;
 			ViewportPoint other = (ViewportPoint) obj;
-			if (Float.floatToIntBits(angle) != Float
-					.floatToIntBits(other.angle))
+			if (this.other == null) {
+				if (other.other != null)
+					return false;
+			} else if (!this.other.equals(other.other))
 				return false;
 			if (segment == null) {
 				if (other.segment != null)
@@ -152,15 +165,6 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			return true;
 		}
 
-		public int hashCode() {
-			final int prime = 31;
-			int result = super.hashCode();
-			result = prime * result + Float.floatToIntBits(angle);
-			result = prime * result
-					+ ((segment == null) ? 0 : segment.hashCode());
-			return result;
-		}
-		
 		
 		
 	}
