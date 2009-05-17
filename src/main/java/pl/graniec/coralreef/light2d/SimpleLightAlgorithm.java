@@ -130,6 +130,8 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 
 		final Segment segment;
 		ViewportPoint other;
+		
+		int hash = -1;
 
 		public ViewportPoint(final Segment segment, float x, float y) {
 			super(x, y);
@@ -137,11 +139,15 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		}
 
 		public int hashCode() {
-			final int prime = 31;
-			int result = super.hashCode();
-			result = prime * result
-					+ ((segment == null) ? 0 : segment.hashCode());
-			return result;
+			
+			if (hash == -1) {
+				final int prime = 31;
+				hash = super.hashCode();
+				hash = prime * hash
+						+ ((segment == null) ? 0 : segment.hashCode());
+			}
+			
+			return hash;
 		}
 
 		public boolean equals(Object obj) {
@@ -452,12 +458,11 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		for (final Iterator itor = viewport.iterator(); itor.hasNext();) {
 			final ViewportPoint vp = (ViewportPoint) itor.next();
 
-			if (actions.contains(vp)) {
+			
+			if (!actions.add(vp)) {
 				System.err.println("" + vp + " already in actions list");
 				continue;
 			}
-			
-			actions.add(vp);
 			
 			if (vp.angle > point.angle) {
 				// this is the break point
@@ -465,10 +470,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 				break;
 			}
 			
-			if (actions.remove(vp.other)) {
-				// action removed. That's perfectly ok!
-				continue;
-			}
+			actions.remove(vp.other);
 			
 		}
 		
@@ -476,7 +478,6 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		final Segment checkedSegment = new Segment(0, 0, point.x, point.y);
 		
 		for (final Iterator itor = actions.iterator(); itor.hasNext();) {
-//			System.out.println(((ViewportPoint) itor.next()).segment);
 			final Segment otherSegment = ((ViewportPoint) itor.next()).segment;
 			
 			if (checkedSegment.intersects(otherSegment)) {
