@@ -68,6 +68,32 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 //		
 //	}
 	
+	static final class AngledPoint extends Point2 implements Comparable {
+
+		final float angle;
+		
+		public AngledPoint(final float x, final float y) {
+			super(x, y);
+			this.angle = Vector2.angle(x, y);
+		}
+
+		public int compareTo(Object obj) {
+			if (getClass() != obj.getClass()) {
+				throw new ClassCastException("cannnot cast " + obj.getClass() + " to " + getClass());
+			}
+			
+			final AngledPoint other = (AngledPoint) obj;
+			
+			if (angle < other.angle) {
+				return -1;
+			} else if (angle > other.angle) {
+				return +1;
+			} else {
+				return 0;
+			}
+		}
+	}
+	
 	/**
 	 * Segment point that can tell the angle on which it residents.
 	 *
@@ -270,7 +296,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		
 		// go thru all points and create a light geometry
 		// but first create a hash set to remove duplicates
-		final Set/*<Point2>*/ points = new LinkedHashSet();
+		final Set/*<AngledPoint>*/ points = new HashSet();
 		final float delta = 360f / partsNum;
 		float position = -180f;
 		
@@ -285,7 +311,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			
 			if (isVisible(point, viewport, startActions)) {
 				tryPoint(point.angle - 0.01f, source, points, viewport, startActions);
-				points.add(new Point2(point.x + source.x, point.y + source.y));
+				points.add(new AngledPoint(point.x, point.y));
 				tryPoint(point.angle + 0.01f, source, points, viewport, startActions);
 			}
 			
@@ -300,8 +326,12 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		
 		final Geometry light = new Geometry();
 		
-		for (final Iterator itor = points.iterator(); itor.hasNext();) {
-			light.addVerticle((Point2) itor.next());
+		final List pointList/*<AngledPoint>*/ = new LinkedList(points);
+		Collections.sort(pointList);
+		
+		for (final Iterator itor = pointList.iterator(); itor.hasNext();) {
+			final Point2 p = (Point2) itor.next();
+			light.addVerticle(new Point2(p.x + source.x, p.y + source.y));
 		}
 		
 		return light;
@@ -377,7 +407,7 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		final ViewportPoint point = new ViewportPoint(null, x, y);
 		
 		if (isVisible(point, viewport, openActions)) {
-			points.add(new Point2(point.x + source.x, point.y + source.y));
+			points.add(new AngledPoint(point.x, point.y));
 		}
 	}
 
