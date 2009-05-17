@@ -94,11 +94,11 @@ public class SimpleLightAlgorithmTest extends TestCase {
 		super.tearDown();
 	}
 
-//	/**
-//	 * Test method for {@link pl.graniec.coralreef.light2d.SimpleLightAlgorithm#buildViewport(pl.graniec.coralreef.light2d.LightSource, java.util.List)}.
-//	 */
-//	public void testBuildViewport() {
-//		
+	/**
+	 * Test method for {@link pl.graniec.coralreef.light2d.SimpleLightAlgorithm#buildViewport(pl.graniec.coralreef.light2d.LightSource, java.util.List)}.
+	 */
+	public void testBuildViewport() {
+		
 //		final List resistors = new LinkedList(); 
 //		
 //		final LightResistor r1 = new LightResistor();
@@ -141,9 +141,9 @@ public class SimpleLightAlgorithmTest extends TestCase {
 ////		
 ////		assertEquals(135f, point.angle, 0f);
 ////		assertEquals(-2f, point.x, 0f);
-////		assertEquals(2f, point.y, 0f);
-//		
-//	}
+////		assertEquals(2f, point.y, 0f);?
+		
+	}
 	
 	public void te_stOverall() throws InterruptedException {
 		
