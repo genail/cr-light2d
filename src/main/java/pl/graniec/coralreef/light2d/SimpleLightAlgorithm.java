@@ -31,7 +31,6 @@ package pl.graniec.coralreef.light2d;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -48,26 +47,6 @@ import pl.graniec.coralreef.geometry.Vector2;
  */
 public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 
-	public static final class Direction {
-		public static final int None = 1;
-		public static final int Left = 2;
-		public static final int Right = 3;
-		
-		private Direction() {
-		}
-	}
-	
-//	private static final class ResistorSegment extends Segment {
-//		
-////		final LightResistor resistor;
-//
-//		public ResistorSegment(final LightResistor resistor, float x1, float y1, float x2, float y2) {
-//			super(x1, y1, x2, y2);
-////			this.resistor = resistor;
-//		}
-//		
-//	}
-	
 	static class AngledPoint extends Point2 implements Comparable {
 
 		final float angle;
@@ -93,13 +72,6 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			}
 		}
 		
-		public int hashCode() {
-			final int prime = 31;
-			int result = super.hashCode();
-			result = prime * result + Float.floatToIntBits(angle);
-			return result;
-		}
-
 		public boolean equals(Object obj) {
 			if (this == obj)
 				return true;
@@ -114,11 +86,38 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			return true;
 		}
 
+		public int hashCode() {
+			final int prime = 31;
+			int result = super.hashCode();
+			result = prime * result + Float.floatToIntBits(angle);
+			return result;
+		}
+
 		/*
 		 * @see java.lang.Object#toString()
 		 */
 		public String toString() {
 			return getClass().getSimpleName() + "[x=" + x + ",y=" + y + ",angle=" + angle + "]";
+		}
+	}
+	
+//	private static final class ResistorSegment extends Segment {
+//		
+////		final LightResistor resistor;
+//
+//		public ResistorSegment(final LightResistor resistor, float x1, float y1, float x2, float y2) {
+//			super(x1, y1, x2, y2);
+////			this.resistor = resistor;
+//		}
+//		
+//	}
+	
+	public static final class Direction {
+		public static final int None = 1;
+		public static final int Left = 2;
+		public static final int Right = 3;
+		
+		private Direction() {
 		}
 	}
 	
@@ -136,18 +135,6 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		public ViewportPoint(final Segment segment, float x, float y) {
 			super(x, y);
 			this.segment = segment;
-		}
-
-		public int hashCode() {
-			
-			if (hash == -1) {
-				final int prime = 31;
-				hash = super.hashCode();
-				hash = prime * hash
-						+ ((segment == null) ? 0 : segment.hashCode());
-			}
-			
-			return hash;
 		}
 
 		public boolean equals(Object obj) {
@@ -171,46 +158,19 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 			return true;
 		}
 
-		
-		
-	}
-	
-	static final float getAngleDifference(final float from, final float to) {
-		final float transCurrent = to - from;
-		
-		if (transCurrent > 180.0f) {
-			return -180.0f + (transCurrent - 180.0f);
-		} else if (transCurrent < -180.0f) {
-			return 180.0f + (transCurrent + 180.0f);
+		public int hashCode() {
+			
+			if (hash == -1) {
+				final int prime = 31;
+				hash = super.hashCode();
+				hash = prime * hash
+						+ ((segment == null) ? 0 : segment.hashCode());
+			}
+			
+			return hash;
 		}
-		
-		return transCurrent;
-	}
 
-	static final int getDirection(final float lastAngle, final float currentAngle) {
-		return (getAngleDifference(lastAngle, currentAngle) > 0) ? Direction.Left : Direction.Right;
-	}
-	
-	static final List/*<ViewportPoint>*/ buildViewport(final LightSource source, final List/*<Segments>*/ segments) {
 		
-		// build viewport
-		final List/*<Float, ViewportPoint>*/ viewport = new LinkedList();
-		
-		// get all points from segments
-		for (final Iterator itor = segments.iterator(); itor.hasNext();) {
-			final Segment segment = (Segment) itor.next();
-			
-			final ViewportPoint point1 = new ViewportPoint(segment, segment.x1, segment.y1);
-			final ViewportPoint point2 = new ViewportPoint(segment, segment.x2, segment.y2);
-			
-			point1.other = point2;
-			point2.other = point1;
-			
-			viewport.add(point1);
-			viewport.add(point2);
-		}
-		
-		return viewport;
 		
 	}
 	
@@ -250,12 +210,81 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		
 		return result;
 	}
-	
-	private void expandSegments(final List/*<Segment>*/ segments) {
+
+	static final List/*<ViewportPoint>*/ buildViewport(final LightSource source, final List/*<Segments>*/ segments) {
+		
+		// build viewport
+		final List/*<Float, ViewportPoint>*/ viewport = new LinkedList();
+		
+		// get all points from segments
 		for (final Iterator itor = segments.iterator(); itor.hasNext();) {
 			final Segment segment = (Segment) itor.next();
-			segment.resize(1.01f);
+			
+			final ViewportPoint point1 = new ViewportPoint(segment, segment.x1, segment.y1);
+			final ViewportPoint point2 = new ViewportPoint(segment, segment.x2, segment.y2);
+			
+			point1.other = point2;
+			point2.other = point1;
+			
+			viewport.add(point1);
+			viewport.add(point2);
 		}
+		
+		return viewport;
+		
+	}
+	
+	static final float getAngleDifference(final float from, final float to) {
+		final float transCurrent = to - from;
+		
+		if (transCurrent > 180.0f) {
+			return -180.0f + (transCurrent - 180.0f);
+		} else if (transCurrent < -180.0f) {
+			return 180.0f + (transCurrent + 180.0f);
+		}
+		
+		return transCurrent;
+	}
+	
+	static final int getDirection(final float lastAngle, final float currentAngle) {
+		return (getAngleDifference(lastAngle, currentAngle) > 0) ? Direction.Left : Direction.Right;
+	}
+	
+	static final boolean isVisible(final ViewportPoint point, final List viewport, final List/*ViewportPoint*/ openActions) {
+		// make copy of actions
+		final Set/*<ViewportPoint>*/ actions = new HashSet(openActions);
+		
+		for (final Iterator itor = viewport.iterator(); itor.hasNext();) {
+			final ViewportPoint vp = (ViewportPoint) itor.next();
+
+			
+			if (!actions.add(vp)) {
+				System.err.println("" + vp + " already in actions list");
+				continue;
+			}
+			
+			if (vp.angle > point.angle) {
+				// this is the break point
+				// where intersection should be checked
+				break;
+			}
+			
+			actions.remove(vp.other);
+			
+		}
+		
+		// check intersection with all segments
+		final Segment checkedSegment = new Segment(0, 0, point.x, point.y);
+		
+		for (final Iterator itor = actions.iterator(); itor.hasNext();) {
+			final Segment otherSegment = ((ViewportPoint) itor.next()).segment;
+			
+			if (checkedSegment.intersects(otherSegment)) {
+				return false;
+			}
+		}
+		
+		return true;
 	}
 	
 	
@@ -347,147 +376,6 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		return light;
 	}
 	
-	private void makeRelative(final List segments, final LightSource source) {
-		for (final Iterator itor = segments.iterator(); itor.hasNext();) {
-			final Segment segment = (Segment) itor.next();
-			
-			segment.x1 -= source.x;
-			segment.x2 -= source.x;
-			segment.y1 -= source.y;
-			segment.y2 -= source.y;
-		}
-	}
-
-	private List/*<ViewportPoint>*/ getStartActions(final List/*<Segment*/ segments, final LightSource source, final List/*<ViewportPoint>*/ viewport) {
-		
-		final List/*<ViewportPoint>*/ startActions = new LinkedList();
-		
-		final Segment borderSegment = new Segment(0, 0, -source.intensity, 0);
-		
-		for (final Iterator itor = segments.iterator(); itor.hasNext();) {
-			final Segment segment = (Segment) itor.next();
-			
-			if (segment.intersects(borderSegment)) {
-				// if one point is on border segment and the other
-				// on the positive y half, then ignore this intersection
-				if (
-						segment.y1 == 0 && -segment.x1 <= source.intensity && segment.y2 >= 0 ||
-						segment.y2 == 0 && -segment.x2 <= source.intensity && segment.y1 >= 0
-						) {
-					continue;
-				}
-				
-				// got intersection. Get point with y >= 0
-				ViewportPoint vp;
-				
-				if (segment.y1 >= 0) {
-					vp = getPoint(new Point2(segment.x1, segment.y1), new Point2(segment.x2, segment.y2), viewport);
-				} else {
-					vp = getPoint(new Point2(segment.x2, segment.y2), new Point2(segment.x1, segment.y1), viewport);
-				}
-				
-				startActions.add(vp);
-			}
-			
-			// check also if there are points that lies on the border segment
-			// then this can be a open actions too
-			else if (segment.y1 == 0 && segment.x1 < 0 && -segment.x1 <= source.intensity && segment.y2 < 0) {
-				startActions.add(getPoint(new Point2(segment.x1, segment.y1), new Point2(segment.x2, segment.y2), viewport));
-			}
-			else if (segment.y2 == 0 && segment.x2 < 0 && -segment.x2 <= source.intensity && segment.y1 < 0) {
-				startActions.add(getPoint(new Point2(segment.x2, segment.y2), new Point2(segment.x1, segment.y1), viewport));
-			}
-		}
-		
-		return startActions;
-	}
-
-	private void tryPoint(
-			final float angle,
-			final LightSource source,
-			final Set/*<Point2>*/ points,
-			final List/*<ViewportPoint>*/ viewport,
-			final List/*<ViewportPoint>*/ openActions) {
-	
-		final float rad = (float) Math.toRadians(angle);
-		
-		final float x = (float) Math.cos(rad) * source.intensity;
-		final float y = (float) Math.sin(rad) * source.intensity;
-		
-		final ViewportPoint point = new ViewportPoint(null, x, y);
-		
-		if (isVisible(point, viewport, openActions)) {
-			points.add(new AngledPoint(point.x, point.y));
-		}
-	}
-
-	/**
-	 * Gets the segment point <code>point1</code> from viewport.
-	 * The segment must be build from <code>point1</code> to <code>point2</code>
-	 * but only the first one is wanted.
-	 */
-	private ViewportPoint getPoint(final Point2 point1, final Point2 point2, final List viewport) {
-		for (final Iterator itor = viewport.iterator(); itor.hasNext();) {
-			final ViewportPoint vp = (ViewportPoint) itor.next();
-			final Segment segment = vp.segment;
-			
-			if (
-					point1.x == segment.x1 &&
-					point1.y == segment.y1 &&
-					point2.x == segment.x2 &&
-					point2.y == segment.y2
-					||
-					point2.x == segment.x1 &&
-					point2.y == segment.y1 &&
-					point1.x == segment.x2 &&
-					point1.y == segment.y2
-					) {
-				return new ViewportPoint(segment, point1.x, point1.y);
-			}
-			
-			
-		}
-		
-		throw new RuntimeException("Point " + point1 + " and " + point2 + " as a segment not found");
-	}
-
-	static final boolean isVisible(final ViewportPoint point, final List viewport, final List/*ViewportPoint*/ openActions) {
-		// make copy of actions
-		final Set/*<ViewportPoint>*/ actions = new HashSet(openActions);
-		
-		for (final Iterator itor = viewport.iterator(); itor.hasNext();) {
-			final ViewportPoint vp = (ViewportPoint) itor.next();
-
-			
-			if (!actions.add(vp)) {
-				System.err.println("" + vp + " already in actions list");
-				continue;
-			}
-			
-			if (vp.angle > point.angle) {
-				// this is the break point
-				// where intersection should be checked
-				break;
-			}
-			
-			actions.remove(vp.other);
-			
-		}
-		
-		// check intersection with all segments
-		final Segment checkedSegment = new Segment(0, 0, point.x, point.y);
-		
-		for (final Iterator itor = actions.iterator(); itor.hasNext();) {
-			final Segment otherSegment = ((ViewportPoint) itor.next()).segment;
-			
-			if (checkedSegment.intersects(otherSegment)) {
-				return false;
-			}
-		}
-		
-		return true;
-	}
-
 	/**
 	 * Creates a list of resistors that can create shadow (they're in
 	 * light distance).
@@ -548,6 +436,117 @@ public class SimpleLightAlgorithm extends AbstractLightingAlgorithm {
 		
 		return result;
 		
+	}
+
+	private void expandSegments(final List/*<Segment>*/ segments) {
+		for (final Iterator itor = segments.iterator(); itor.hasNext();) {
+			final Segment segment = (Segment) itor.next();
+			segment.resize(1.01f);
+		}
+	}
+
+	/**
+	 * Gets the segment point <code>point1</code> from viewport.
+	 * The segment must be build from <code>point1</code> to <code>point2</code>
+	 * but only the first one is wanted.
+	 */
+	private ViewportPoint getPoint(final Point2 point1, final Point2 point2, final List viewport) {
+		for (final Iterator itor = viewport.iterator(); itor.hasNext();) {
+			final ViewportPoint vp = (ViewportPoint) itor.next();
+			final Segment segment = vp.segment;
+			
+			if (
+					point1.x == segment.x1 &&
+					point1.y == segment.y1 &&
+					point2.x == segment.x2 &&
+					point2.y == segment.y2
+					||
+					point2.x == segment.x1 &&
+					point2.y == segment.y1 &&
+					point1.x == segment.x2 &&
+					point1.y == segment.y2
+					) {
+				return new ViewportPoint(segment, point1.x, point1.y);
+			}
+			
+			
+		}
+		
+		throw new RuntimeException("Point " + point1 + " and " + point2 + " as a segment not found");
+	}
+
+	private List/*<ViewportPoint>*/ getStartActions(final List/*<Segment*/ segments, final LightSource source, final List/*<ViewportPoint>*/ viewport) {
+		
+		final List/*<ViewportPoint>*/ startActions = new LinkedList();
+		
+		final Segment borderSegment = new Segment(0, 0, -source.intensity, 0);
+		
+		for (final Iterator itor = segments.iterator(); itor.hasNext();) {
+			final Segment segment = (Segment) itor.next();
+			
+			if (segment.intersects(borderSegment)) {
+				// if one point is on border segment and the other
+				// on the positive y half, then ignore this intersection
+				if (
+						segment.y1 == 0 && -segment.x1 <= source.intensity && segment.y2 >= 0 ||
+						segment.y2 == 0 && -segment.x2 <= source.intensity && segment.y1 >= 0
+						) {
+					continue;
+				}
+				
+				// got intersection. Get point with y >= 0
+				ViewportPoint vp;
+				
+				if (segment.y1 >= 0) {
+					vp = getPoint(new Point2(segment.x1, segment.y1), new Point2(segment.x2, segment.y2), viewport);
+				} else {
+					vp = getPoint(new Point2(segment.x2, segment.y2), new Point2(segment.x1, segment.y1), viewport);
+				}
+				
+				startActions.add(vp);
+			}
+			
+			// check also if there are points that lies on the border segment
+			// then this can be a open actions too
+			else if (segment.y1 == 0 && segment.x1 < 0 && -segment.x1 <= source.intensity && segment.y2 < 0) {
+				startActions.add(getPoint(new Point2(segment.x1, segment.y1), new Point2(segment.x2, segment.y2), viewport));
+			}
+			else if (segment.y2 == 0 && segment.x2 < 0 && -segment.x2 <= source.intensity && segment.y1 < 0) {
+				startActions.add(getPoint(new Point2(segment.x2, segment.y2), new Point2(segment.x1, segment.y1), viewport));
+			}
+		}
+		
+		return startActions;
+	}
+
+	private void makeRelative(final List segments, final LightSource source) {
+		for (final Iterator itor = segments.iterator(); itor.hasNext();) {
+			final Segment segment = (Segment) itor.next();
+			
+			segment.x1 -= source.x;
+			segment.x2 -= source.x;
+			segment.y1 -= source.y;
+			segment.y2 -= source.y;
+		}
+	}
+
+	private void tryPoint(
+			final float angle,
+			final LightSource source,
+			final Set/*<Point2>*/ points,
+			final List/*<ViewportPoint>*/ viewport,
+			final List/*<ViewportPoint>*/ openActions) {
+	
+		final float rad = (float) Math.toRadians(angle);
+		
+		final float x = (float) Math.cos(rad) * source.intensity;
+		final float y = (float) Math.sin(rad) * source.intensity;
+		
+		final ViewportPoint point = new ViewportPoint(null, x, y);
+		
+		if (isVisible(point, viewport, openActions)) {
+			points.add(new AngledPoint(point.x, point.y));
+		}
 	}
 
 }
